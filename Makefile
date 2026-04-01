@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help fmt lint fix check run_gateway run_stt run_tts run_tts_fish run_tts_all run_rvc run_llm health transcribe_sample tts_vieneu_sample chat_sample
+.PHONY: help fmt lint fix check run_gateway run_stt run_tts run_tts_fish run_tts_all run_rvc run_llm run_all stop_all health transcribe_sample tts_vieneu_sample chat_sample
 
 # ------------------------------------------------------------
 # Config
@@ -40,7 +40,9 @@ help:
 	@echo "  make fix        - lint + autofix (ruff check --fix)"
 	@echo "  make check      - fmt + fix"
 	@echo ""
-	@echo "Run services (each target runs a blocking server):"
+	@echo "Run services:"
+	@echo "  make run_all          - start STT + TTS + LLM + Gateway"
+	@echo "  make stop_all         - kill all services"
 	@echo "  make run_gateway"
 	@echo "  make run_stt"
 	@echo "  make run_tts          - TTS with VieNeu (default, lightweight)"
@@ -97,6 +99,18 @@ run_rvc:
 
 run_llm:
 	$(UVICORN) services.llm.app:app --host $(LLM_HOST) --port $(LLM_PORT)
+
+run_all:
+	@$(UVICORN) services.stt.app:app --host $(STT_HOST) --port $(STT_PORT) &
+	@$(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT) &
+	@$(UVICORN) services.llm.app:app --host $(LLM_HOST) --port $(LLM_PORT) &
+	@$(UVICORN) gateway.app:app --host $(GATEWAY_HOST) --port $(GATEWAY_PORT)
+
+stop_all:
+	@for port in $(STT_PORT) $(TTS_PORT) $(LLM_PORT) $(GATEWAY_PORT); do \
+		pid=$$(lsof -ti TCP:$$port 2>/dev/null); \
+		if [ -n "$$pid" ]; then kill $$pid && echo "Stopped :$$port"; fi; \
+	done
 
 # ------------------------------------------------------------
 # Smoke tests (curl)
