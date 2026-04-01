@@ -91,16 +91,16 @@ def tts_vieneu(
         "top_k": str(top_k),
         "max_chars": str(max_chars),
     }
-    files: dict[str, tuple[str, object, str]] = {}
     if ref_audio_path:
         p = Path(ref_audio_path)
-        files["ref_audio"] = (p.name, open(ref_audio_path, "rb"), "application/octet-stream")
-
-    try:
-        resp = _client.post(f"{GATEWAY_URL}/tts/vieneu", data=data, files=files or None)
-    finally:
-        for _, fobj in files.items():
-            fobj[1].close()
+        with open(ref_audio_path, "rb") as f:
+            resp = _client.post(
+                f"{GATEWAY_URL}/tts/vieneu",
+                data=data,
+                files={"ref_audio": (p.name, f, "application/octet-stream")},
+            )
+    else:
+        resp = _client.post(f"{GATEWAY_URL}/tts/vieneu", data=data)
 
     _raise_on_error(resp)
     return _save_wav(resp.content)

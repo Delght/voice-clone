@@ -110,11 +110,12 @@ run_ui:
 run_all:
 	@$(UVICORN) services.stt.app:app --host $(STT_HOST) --port $(STT_PORT) &
 	@$(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT) &
+	@$(UVICORN) services.rvc.app:app --host $(RVC_HOST) --port $(RVC_PORT) &
 	@$(UVICORN) services.llm.app:app --host $(LLM_HOST) --port $(LLM_PORT) &
 	@$(UVICORN) gateway.app:app --host $(GATEWAY_HOST) --port $(GATEWAY_PORT)
 
 stop_all:
-	@for port in $(STT_PORT) $(TTS_PORT) $(LLM_PORT) $(GATEWAY_PORT); do \
+	@for port in $(STT_PORT) $(TTS_PORT) $(RVC_PORT) $(LLM_PORT) $(GATEWAY_PORT); do \
 		pid=$$(lsof -ti TCP:$$port 2>/dev/null); \
 		if [ -n "$$pid" ]; then kill $$pid && echo "Stopped :$$port"; fi; \
 	done
