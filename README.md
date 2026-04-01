@@ -16,12 +16,12 @@ A fully self-hosted, privacy-first voice cloning and conversational AI system. N
 
 | Layer | Technology |
 | --- | --- |
-| Speech-to-Text | faster-whisper |
-| Text-to-Speech | fish-speech + VieNeu-TTS |
-| Voice Conversion | Applio (RVC) |
-| LLM Brain | Qwen3.5 via Anything-LLM |
-| Backend | FastAPI + Pydantic |
-| Frontend | Gradio |
+| Speech-to-Text | [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) |
+| Text-to-Speech | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) + [pnnbao97/VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) |
+| Voice Conversion | [IAHispano/Applio](https://github.com/IAHispano/Applio) (RVC) |
+| LLM Brain | Qwen3.5 via [Mintplex-Labs/anything-llm](https://github.com/Mintplex-Labs/anything-llm) |
+| Backend | [FastAPI](https://github.com/fastapi/fastapi) + [Pydantic](https://github.com/pydantic/pydantic) |
+| Frontend | [Gradio](https://github.com/gradio-app/gradio) |
 | Hardware | Apple MPS · Nvidia CUDA · CPU (auto-detected) |
 
 ## Architecture
@@ -45,8 +45,8 @@ User → Microphone
 > Work in progress — building phase by phase.
 
 - [x] Project structure & documentation
-- [ ] Phase 1: Audio processing & STT pipeline
-- [ ] Phase 2: TTS & voice cloning
+- [x] Phase 1: Audio processing & STT pipeline
+- [x] Phase 2: TTS & voice cloning
 - [ ] Phase 3: Microservices & API Gateway
 - [ ] Phase 4: LLM integration
 - [ ] Phase 5: UI
@@ -66,8 +66,24 @@ User → Microphone
 
 ## Getting Started
 
-*Installation instructions and setup scripts are coming soon as the phases are completed.*
+### Run scripts (local)
+
+```bash
+conda activate voice
+
+# Phase 1 — STT + chunking
+python scripts/chunk_audio.py --input data/raw/YOUR_FILE.mp3
+
+# Phase 2 — fish-speech (English / multilingual TTS + cloning)
+python scripts/tts_infer.py --text "This is an AI version of Thao. What do you want to talk about?" --ref data/chunks/speech_chunk_0001.wav --ref-text "America is a cutting edge economy, but our immigration system is stuck in the past."
+
+# Phase 2 — VieNeu-TTS (Vietnamese TTS, optional cloning)
+python scripts/vieneu_infer.py --text "Xin chào, hôm nay trời đẹp quá!"
+
+# Phase 2 — Applio RVC (voice conversion; requires a .pth voice model)
+python scripts/rvc_infer.py --input data/output.wav --model models/rvc/target_voice.pth
+```
 
 ## Privacy
 
-All inference runs locally. No data is sent to OpenAI, ElevenLabs, or any external service.
+All inference runs locally. No data is sent to any external service.
