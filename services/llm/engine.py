@@ -8,6 +8,7 @@ Env vars:
 
 import logging
 import os
+import re
 
 import httpx
 
@@ -38,7 +39,7 @@ class LLMEngine:
         if not self.api_key:
             log.warning("ANYTHINGLLM_API_KEY is not set.")
         self._client = httpx.AsyncClient(
-            timeout=60.0,
+            timeout=180.0,
             headers={
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
@@ -81,6 +82,12 @@ class LLMEngine:
         text_response = resp.json().get("textResponse", "").strip()
         if not text_response:
             raise RuntimeError("Anything-LLM returned empty textResponse.")
+
+        # Qwen3.5 thinking mode wraps reasoning in <think>...</think> before the answer.
+        # Strip it so TTS only receives the final spoken response.
+        text_response = re.sub(r"<think>.*?</think>", "", text_response, flags=re.DOTALL).strip()
+        if not text_response:
+            raise RuntimeError("LLM response was empty after stripping think block.")
 
         return text_response
 
