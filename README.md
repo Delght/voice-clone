@@ -2,6 +2,18 @@
 
 Self-hosted voice cloning and conversational AI. Zero external APIs.
 
+**Zero-shot voice cloning**: Clone any voice from a 10–30s audio sample. No training, no fine-tuning required.
+
+## Demo
+
+<video src="https://github.com/user-attachments/assets/ac9be32c-dcc3-43a0-b067-3b04df8a3f00" controls width="100%"></video>
+
+
+
+
+
+
+
 ## Stack
 
 | Layer | Technology |

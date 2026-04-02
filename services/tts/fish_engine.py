@@ -30,18 +30,6 @@ MAX_TOKENS = 4096
 
 SILENCE_BETWEEN_CHUNKS_S = 0.2
 
-# Heuristic guard against occasional early-stop truncation.
-# If a generated chunk is much shorter than expected (by word count),
-# retry once with more conservative sampling.
-MIN_SECONDS_PER_WORD = 0.12
-TRUNCATION_RATIO_THRESHOLD = 0.55
-
-# Retry sampling parameters — applied when truncation is detected.
-RETRY_MAX_TOKENS_FACTOR = 1.5  # scale up token budget
-RETRY_TEMPERATURE_FLOOR = 0.3  # floor to keep output coherent
-RETRY_TEMPERATURE_FACTOR = 0.75  # pull temperature toward conservative
-RETRY_TOP_P_CEILING = 0.6  # cap top_p to reduce randomness
-
 
 def _get_device() -> str:
     return (
@@ -127,12 +115,6 @@ def _pack_chunks(sentences: list[str], max_chars: int) -> list[str]:
             final.append(b)
 
     return [c.strip() for c in final if c and c.strip()]
-
-
-def _expected_min_duration_s(text: str) -> float:
-    words = len([w for w in text.split() if w.strip()])
-    # A very rough lower bound; used only to detect obvious truncation.
-    return max(0.35, words * MIN_SECONDS_PER_WORD)
 
 
 class FishSpeechEngine:
@@ -276,23 +258,6 @@ class FishSpeechEngine:
                 p=top_p,
             )
 
-            # Retry once if the chunk looks obviously truncated.
-            dur_s = len(chunk_audio) / sample_rate
-            expected_min_s = _expected_min_duration_s(chunk_text)
-            if dur_s < expected_min_s * TRUNCATION_RATIO_THRESHOLD:
-                log.warning(
-                    "Chunk %d/%d seems truncated (%.2fs < %.2fs). Retrying with safer sampling.",
-                    idx + 1,
-                    len(chunks),
-                    dur_s,
-                    expected_min_s,
-                )
-                chunk_audio, sample_rate = _infer_once(
-                    t=chunk_text,
-                    max_new_tokens=min(MAX_TOKENS, int(max_tokens * RETRY_MAX_TOKENS_FACTOR)),
-                    temp=max(RETRY_TEMPERATURE_FLOOR, temperature * RETRY_TEMPERATURE_FACTOR),
-                    p=min(RETRY_TOP_P_CEILING, top_p),
-                )
             full_audio_chunks.append(chunk_audio)
 
             if idx < len(chunks) - 1:

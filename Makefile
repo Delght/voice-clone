@@ -147,7 +147,7 @@ run_all_fish:
 	@$(UVICORN) gateway.app:app --host $(GATEWAY_HOST) --port $(GATEWAY_PORT)
 
 stop_all:
-	@for port in $(STT_PORT) $(TTS_PORT) $(RVC_PORT) $(LLM_PORT) $(GATEWAY_PORT); do \
+	@for port in $(STT_PORT) $(TTS_PORT) $(RVC_PORT) $(LLM_PORT) $(GATEWAY_PORT) $(UI_PORT); do \
 		pid=$$(lsof -ti TCP:$$port 2>/dev/null); \
 		if [ -n "$$pid" ]; then kill $$pid && echo "Stopped :$$port"; fi; \
 	done
