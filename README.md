@@ -41,19 +41,26 @@ Self-hosted voice cloning and conversational AI. Zero external APIs.
                     ▼
 ┌──────────────────────────────────────────────┐
 │           API Gateway (:8000)                │
-│   /chat  /transcribe  /tts/*  /convert-voice │
+│ /transcribe  /tts/*  /convert-voice  /chat   │
 └────┬──────────┬──────────┬───────────┬───────┘
      ▼          ▼          ▼           ▼
     STT        TTS         RVC        LLM
    :8001      :8002       :8003      :8004
 ```
 
-Conversation pipeline: `Mic → STT → LLM → TTS → (RVC optional) → Speaker`
+### Pipelines
+
+| Flow | Gateway | Notes |
+| --- | --- | --- |
+| Transcribe | `/transcribe` | `Audio → STT → text` |
+| Voice cloning | `/tts/vieneu`, `/tts/fish-speech` | `Text + ref audio + ref_text → TTS → WAV` |
+| Voice conversion | `/convert-voice` | `WAV + RVC .pth → RVC → converted WAV` |
+| Conversation | `/chat` | `Mic → STT → LLM → TTS → Speaker` |
 
 ## Requirements
 
 - [Miniforge](https://github.com/conda-forge/miniforge) + `ffmpeg`
-- [Ollama](https://ollama.com) + [Anything-LLM](https://anythingllm.com)
+- [Ollama](https://ollama.com) + [Anything-LLM](https://anythingllm.com) (for the LLM connector)
 
 ## Usage
 
