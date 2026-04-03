@@ -74,8 +74,8 @@ def on_chat(
             ref_path = _resolve_fish_ref_path(fish_ref_audio)
             if not ref_path:
                 yield (
-                    "Error: fish-speech needs a reference WAV"
-                    "or add audio/output/morgan_freeman.wav",
+                    "Error: fish-speech needs a reference WAV "
+                    "(upload one or add audio/output/morgan_freeman.wav).",
                     user_text,
                     ai_text,
                     None,
@@ -89,8 +89,8 @@ def on_chat(
             )
         else:
             audio_out = api_client.tts_vieneu(text=ai_text)
-    except api_client.APIError:
-        yield "", user_text, ai_text, None
+    except api_client.APIError as e:
+        yield f"Error at TTS: {e.detail}", user_text, ai_text, None
         return
 
     yield "", user_text, ai_text, audio_out

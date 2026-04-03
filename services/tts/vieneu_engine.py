@@ -80,12 +80,9 @@ class VieNeuEngine:
         if ref_audio_bytes is not None:
             suffix = ".wav"
             if ref_audio_filename:
-                try:
-                    s = Path(ref_audio_filename).suffix
-                    if s:
-                        suffix = s
-                except Exception:
-                    pass
+                s = Path(ref_audio_filename).suffix
+                if s:
+                    suffix = s
 
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
                 tmp.write(ref_audio_bytes)

@@ -2,7 +2,7 @@
 
 Self-hosted voice cloning and conversational AI. Zero external APIs.
 
-**Zero-shot voice cloning**: Clone any voice from a 10–30s audio sample. No training, no fine-tuning required.
+Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No training, no fine-tuning required.
 
 ## Demo
 
@@ -30,17 +30,17 @@ Self-hosted voice cloning and conversational AI. Zero external APIs.
                     ▼
 ┌──────────────────────────────────────────────┐
 │              Gradio UI (:7860)               │
-└────────────────── ┬──────────────────────────┘
+└───────────────────┬──────────────────────────┘
                     │ HTTP
                     ▼
 ┌──────────────────────────────────────────────┐
 │           API Gateway (:8000)                │
 │  /transcribe  /tts/*  /convert-voice  /chat  │
 │  /llm/chat                                   │
-└────┬──────────┬──────────┬───────────┬───────┘
-     ▼          ▼          ▼           ▼
-    STT        TTS         RVC        LLM
-   :8001      :8002       :8003      :8004
+└──────┬──────────┬──────────┬───────────┬─────┘
+       ▼          ▼          ▼           ▼
+      STT        TTS         RVC        LLM
+     :8001      :8002       :8003      :8004
 ```
 
 ### Pipelines

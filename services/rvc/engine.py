@@ -100,7 +100,8 @@ class RVCEngine:
             in_tmp.write(audio_bytes)
             input_path = in_tmp.name
 
-        output_path = tempfile.mktemp(suffix=".wav")
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
+            output_path = out_tmp.name
 
         original_cwd = os.getcwd()
         os.chdir(str(APPLIO_ROOT))
