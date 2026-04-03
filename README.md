@@ -6,15 +6,9 @@ Self-hosted voice cloning and conversational AI. Zero external APIs.
 
 ## Demo
 
+![Demo UI](docs/images/demo.png)
+
 <video src="https://github.com/user-attachments/assets/8704a7d8-fe15-47e7-85ce-a0235b8c3809" controls width="100%"></video>
-
-
-
-
-
-
-
-
 
 
 ## Stack
@@ -56,7 +50,7 @@ Self-hosted voice cloning and conversational AI. Zero external APIs.
 | Transcribe | `/transcribe` | `Audio → STT → text` |
 | Voice cloning | `/tts/vieneu`, `/tts/fish-speech` | `Text + ref audio + ref_text → TTS → WAV` |
 | Voice conversion | `/convert-voice` | `WAV + RVC .pth → RVC → converted WAV` |
-| Conversation (one shot) | `/chat` | `Mic → STT → LLM → TTS → WAV` — e.g. `make chat_sample`, `api_client.chat()` |
+| Conversation (one shot) | `/chat` | `Mic → STT → LLM → TTS → WAV`. E.g. `make chat_sample`, `api_client.chat()` |
 | LLM only | `/llm/chat` | JSON `{"message": "..."}` → assistant text (proxied to `:8004`) |
 | Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish-speech needs a ref WAV (upload, or `audio/output/morgan_freeman.wav`, or env) |
 
@@ -99,7 +93,7 @@ curl -X POST http://localhost:8000/tts/vieneu \
     -o output.wav
 ```
 
-> VieNeu: `ref_text` must match the reference audio exactly — omitting it degrades cloning quality significantly.
+> VieNeu: `ref_text` must match the reference audio exactly. Omitting it degrades cloning quality significantly.
 
 ### Scripts
 
@@ -115,7 +109,7 @@ python scripts/vieneu_infer.py --text "Xin chào!"
 python scripts/rvc_infer.py --input data/output.wav --model models/rvc/target.pth
 ```
 
-> RVC requires a trained `.pth` model — create `models/rvc/` and add your model before running.
+> RVC requires a trained `.pth` model. Create `models/rvc/` and add your model before running.
 
 ### Dev
 
