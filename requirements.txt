@@ -3,7 +3,6 @@
 # ============================================================
 faster-whisper
 librosa
-pydub
 soundfile
 
 # ============================================================
@@ -25,7 +24,6 @@ python-multipart    # required for FastAPI file uploads
 # ============================================================
 torchaudio
 numpy
-pandas              # for transcript.csv handling
 
 # ============================================================
 # UTILITIES

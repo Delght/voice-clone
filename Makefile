@@ -75,14 +75,11 @@ help:
 	@echo ""
 
 # ------------------------------------------------------------
-# Code quality
+# Audio preprocessing
 # ------------------------------------------------------------
 AUDIO_INPUT  ?= audio/input
 AUDIO_OUTPUT ?= audio/output
 
-# ------------------------------------------------------------
-# Audio preprocessing
-# ------------------------------------------------------------
 convert_audio:
 	$(PY) scripts/convert_audio.py --input $(AUDIO_INPUT) --output $(AUDIO_OUTPUT)
 
