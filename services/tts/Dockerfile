@@ -1,5 +1,4 @@
-# TTS Service — VieNeu-TTS (Vietnamese-optimized, default engine)
-# For fish-speech, see Dockerfile.fish
+# VieNeu-only TTS image. Compose `tts` service sets TTS_ENGINES=vieneu.
 #
 # Build arg TORCH_INDEX lets you switch torch variant without changing this file:
 #   CPU (default): --build-arg TORCH_INDEX=https://download.pytorch.org/whl/cpu

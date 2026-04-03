@@ -1,9 +1,4 @@
-"""Voice Cloning & AI Assistant: Gradio Web UI.
-
-Run:
-    python -m ui.app
-    # or: make run_ui
-"""
+"""Gradio UI for the voice project."""
 
 from __future__ import annotations
 
@@ -11,26 +6,24 @@ import os
 
 import gradio as gr
 
+from voice_common.fish_ref import default_fish_ref_path
+
 from . import api_client
 
 TITLE = "Voice Cloning & AI Assistant"
 
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Bundled default for Morgan-style fish-speech ref (place your sample here or upload in UI).
-_DEFAULT_MORGAN_WAV = os.path.join(_REPO_ROOT, "audio", "output", "morgan_freeman.wav")
-# Optional overrides (same paths as before if you prefer env over UI).
+_DEFAULT_FISH_REF_WAV = str(default_fish_ref_path())
 VOICE_CHAT_FISH_REF_AUDIO = os.environ.get("VOICE_CHAT_FISH_REF_AUDIO", "").strip()
 VOICE_CHAT_FISH_REF_TEXT = os.environ.get("VOICE_CHAT_FISH_REF_TEXT", "").strip()
 
 
 def _resolve_fish_ref_path(uploaded_ref: str | None) -> str | None:
-    """Upload wins, then env, then bundled morgan_freeman.wav if present."""
     if uploaded_ref and os.path.isfile(uploaded_ref):
         return uploaded_ref
     if VOICE_CHAT_FISH_REF_AUDIO and os.path.isfile(VOICE_CHAT_FISH_REF_AUDIO):
         return VOICE_CHAT_FISH_REF_AUDIO
-    if os.path.isfile(_DEFAULT_MORGAN_WAV):
-        return _DEFAULT_MORGAN_WAV
+    if os.path.isfile(_DEFAULT_FISH_REF_WAV):
+        return _DEFAULT_FISH_REF_WAV
     return None
 
 
@@ -40,7 +33,6 @@ def on_chat(
     fish_ref_audio: str | None,
     fish_ref_text: str,
 ):
-    """STT → LLM → TTS with per-step status (mirrors gateway orchestrator, adds UX)."""
     if audio_path is None:
         yield "Error: record or upload an audio file first.", "", "", None
         return
@@ -54,7 +46,7 @@ def on_chat(
 
     user_text = result.get("text", "").strip()
     if not user_text:
-        yield "Error: could not transcribe audio — try speaking more clearly.", "", "", None
+        yield "Error: could not transcribe audio. Try speaking more clearly.", "", "", None
         return
 
     yield "Thinking...", user_text, "", None
@@ -74,8 +66,8 @@ def on_chat(
             ref_path = _resolve_fish_ref_path(fish_ref_audio)
             if not ref_path:
                 yield (
-                    "Error: fish-speech needs a reference WAV "
-                    "(upload one or add audio/output/morgan_freeman.wav).",
+                    "Error: no fish-speech reference WAV (upload below, restore "
+                    "audio/output/morgan_freeman.wav, or set VOICE_CHAT_FISH_REF_AUDIO).",
                     user_text,
                     ai_text,
                     None,
@@ -304,7 +296,7 @@ def build_app() -> gr.Blocks:
                         )
                         tts_engine = gr.Dropdown(
                             choices=["VieNeu-TTS", "fish-speech"],
-                            value="VieNeu-TTS",
+                            value="fish-speech",
                             label="Engine",
                         )
                         tts_ref_audio = gr.Audio(

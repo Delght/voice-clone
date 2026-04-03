@@ -1,12 +1,4 @@
-"""TTS Microservice: Text-to-Speech via fish-speech and VieNeu-TTS.
-
-Hosts two TTS engines behind separate endpoints:
-    POST /tts/fish-speech  - multilingual, zero-shot voice cloning
-    POST /tts/vieneu       - Vietnamese-optimized, optional voice cloning
-
-Run:
-    uvicorn services.tts.app:app --port 8002
-"""
+"""TTS service: /tts/fish-speech and /tts/vieneu."""
 
 from __future__ import annotations
 
@@ -29,8 +21,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# TTS_ENGINES=vieneu (default) | fish | fish,vieneu
-_enabled = os.environ.get("TTS_ENGINES", "vieneu").lower().split(",")
+_enabled = os.environ.get("TTS_ENGINES", "fish").lower().split(",")
 _enabled = [e.strip() for e in _enabled if e.strip()]
 
 fish_engine: FishSpeechEngine | None = None

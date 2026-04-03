@@ -1,23 +1,32 @@
-"""Orchestrator: STT → LLM → TTS pipeline for POST /chat.
+"""POST /chat: STT, LLM, fish-speech TTS (ref audio from env or bundled WAV)."""
 
-Pipeline:
-    1. POST :8001/transcribe  (STT)  audio bytes  → user text
-    2. POST :8004/chat        (LLM)  user text    → response text
-    3. POST :8002/tts/vieneu  (TTS)  response text → WAV bytes
-"""
+from __future__ import annotations
 
-import logging
+import os
+from pathlib import Path
 
 import httpx
 
+from voice_common.fish_ref import default_fish_ref_path
+
 from .config import LLM_URL, STT_URL, TTS_URL
 
-log = logging.getLogger(__name__)
+
+def _resolve_chat_fish_ref_path() -> Path | None:
+    env = (
+        os.environ.get("CHAT_FISH_REF_AUDIO") or os.environ.get("VOICE_CHAT_FISH_REF_AUDIO") or ""
+    ).strip()
+    if env:
+        p = Path(env)
+        if p.is_file():
+            return p
+    default_ref = default_fish_ref_path()
+    if default_ref.is_file():
+        return default_ref
+    return None
 
 
 class PipelineError(Exception):
-    """Raised when a pipeline stage fails."""
-
     def __init__(self, stage: str, detail: str, status_code: int = 502) -> None:
         super().__init__(f"[{stage}] {detail}")
         self.stage = stage
@@ -26,19 +35,6 @@ class PipelineError(Exception):
 
 
 async def run_chat_pipeline(audio_bytes: bytes, client: httpx.AsyncClient) -> bytes:
-    """Run the full STT → LLM → TTS pipeline.
-
-    Args:
-        audio_bytes: Raw audio from the user.
-        client: Shared httpx.AsyncClient from the gateway lifespan.
-
-    Returns:
-        WAV bytes of the LLM's spoken response.
-
-    Raises:
-        PipelineError: If any stage fails.
-    """
-
     try:
         stt_resp = await client.post(
             f"{STT_URL}/transcribe",
@@ -70,8 +66,25 @@ async def run_chat_pipeline(audio_bytes: bytes, client: httpx.AsyncClient) -> by
     if not response_text:
         raise PipelineError("LLM", "Empty response.", 502)
 
+    ref_path = _resolve_chat_fish_ref_path()
+    if ref_path is None:
+        raise PipelineError(
+            "TTS",
+            "Missing fish-speech ref WAV (CHAT_FISH_REF_AUDIO, VOICE_CHAT_FISH_REF_AUDIO, "
+            "or audio/output/morgan_freeman.wav).",
+            503,
+        )
+    ref_text = (
+        os.environ.get("CHAT_FISH_REF_TEXT") or os.environ.get("VOICE_CHAT_FISH_REF_TEXT") or ""
+    ).strip()
+    ref_bytes = ref_path.read_bytes()
+
     try:
-        tts_resp = await client.post(f"{TTS_URL}/tts/vieneu", data={"text": response_text})
+        tts_resp = await client.post(
+            f"{TTS_URL}/tts/fish-speech",
+            files={"ref_audio": (ref_path.name, ref_bytes, "audio/wav")},
+            data={"text": response_text, "ref_text": ref_text},
+        )
     except httpx.ConnectError:
         raise PipelineError("TTS", "Cannot connect to TTS service (:8002).")
     except httpx.TimeoutException:

@@ -51,6 +51,8 @@ models/
 # ============================================================
 data/
 *.wav
+# Default fish-speech /chat + Voice Chat reference (repo ships this so pipeline works out of the box)
+!audio/output/morgan_freeman.wav
 *.mp3
 *.flac
 *.ogg

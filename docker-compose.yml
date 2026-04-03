@@ -23,7 +23,7 @@ services:
       dockerfile: services/tts/Dockerfile
     env_file: .env
     environment:
-      - TTS_ENGINES=${TTS_ENGINES:-vieneu}
+      - TTS_ENGINES=vieneu
     volumes:
       - ./data:/app/data
     restart: unless-stopped

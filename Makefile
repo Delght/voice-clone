@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help fmt lint fix check install-hooks run_gateway run_stt run_tts run_tts_fish run_tts_all run_rvc run_llm run_ui run_all run_all_fish stop_all health transcribe_sample tts_vieneu_sample chat_sample convert_audio
+.PHONY: help fmt lint fix check install-hooks run_gateway run_stt run_tts run_tts_vieneu run_rvc run_llm run_ui run_all stop_all health transcribe_sample tts_vieneu_sample chat_sample convert_audio
 
 # ------------------------------------------------------------
 # Config
@@ -51,14 +51,12 @@ help:
 	@echo "  make install-hooks - install git pre-commit hook (runs check before every commit)"
 	@echo ""
 	@echo "Run services:"
-	@echo "  make run_all          - start STT + TTS(VieNeu) + LLM + Gateway"
-	@echo "  make run_all_fish     - start STT + TTS(fish-speech) + LLM + Gateway"
+	@echo "  make run_all          - start STT + TTS(fish-speech) + LLM + Gateway"
 	@echo "  make stop_all         - kill all services"
 	@echo "  make run_gateway"
 	@echo "  make run_stt"
-	@echo "  make run_tts          - TTS with VieNeu (default, lightweight)"
-	@echo "  make run_tts_fish     - TTS with fish-speech only (heavier)"
-	@echo "  make run_tts_all      - TTS with both engines (uses more RAM)"
+	@echo "  make run_tts          - TTS fish-speech (conda voice_fish; TTS_ENGINES=fish)"
+	@echo "  make run_tts_vieneu   - TTS VieNeu only (conda voice; TTS_ENGINES=vieneu)"
 	@echo "  make run_rvc"
 	@echo "  make run_llm          - LLM connector → Anything-LLM :3001"
 	@echo "  make run_ui           - Gradio UI (connects to Gateway)"
@@ -87,13 +85,13 @@ convert_audio:
 # Code quality
 # ------------------------------------------------------------
 fmt:
-	$(RUFF) format services/ gateway/ scripts/ ui/
+	$(RUFF) format services/ gateway/ scripts/ ui/ voice_common/
 
 lint:
-	$(RUFF) check services/ gateway/ scripts/ ui/
+	$(RUFF) check services/ gateway/ scripts/ ui/ voice_common/
 
 fix:
-	$(RUFF) check services/ gateway/ scripts/ ui/ --fix
+	$(RUFF) check services/ gateway/ scripts/ ui/ voice_common/ --fix
 
 check: fmt fix
 
@@ -112,13 +110,10 @@ run_stt:
 	$(UVICORN) services.stt.app:app --host $(STT_HOST) --port $(STT_PORT)
 
 run_tts:
-	$(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT)
-
-run_tts_fish:
 	TTS_ENGINES=fish $(UVICORN_FISH) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT)
 
-run_tts_all:
-	TTS_ENGINES=fish,vieneu $(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT)
+run_tts_vieneu:
+	TTS_ENGINES=vieneu $(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT)
 
 run_rvc:
 	$(UVICORN) services.rvc.app:app --host $(RVC_HOST) --port $(RVC_PORT)
@@ -130,13 +125,6 @@ run_ui:
 	$(PY) -m ui.app
 
 run_all:
-	@$(UVICORN) services.stt.app:app --host $(STT_HOST) --port $(STT_PORT) &
-	@$(UVICORN) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT) &
-	@$(UVICORN) services.rvc.app:app --host $(RVC_HOST) --port $(RVC_PORT) &
-	@$(UVICORN) services.llm.app:app --host $(LLM_HOST) --port $(LLM_PORT) &
-	@$(UVICORN) gateway.app:app --host $(GATEWAY_HOST) --port $(GATEWAY_PORT)
-
-run_all_fish:
 	@$(UVICORN) services.stt.app:app --host $(STT_HOST) --port $(STT_PORT) &
 	@TTS_ENGINES=fish $(UVICORN_FISH) services.tts.app:app --host $(TTS_HOST) --port $(TTS_PORT) &
 	@$(UVICORN) services.rvc.app:app --host $(RVC_HOST) --port $(RVC_PORT) &

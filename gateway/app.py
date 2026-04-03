@@ -4,14 +4,14 @@ Run:
     uvicorn gateway.app:app --port 8000
 
 Endpoints:
-    POST /chat              -> orchestrate STT → LLM → TTS pipeline
+    POST /chat              -> STT + LLM + fish TTS (orchestrator)
     POST /transcribe        -> STT :8001
     POST /tts/fish-speech   -> TTS :8002
     POST /tts/vieneu        -> TTS :8002
     POST /convert-voice     -> RVC :8003
     POST /llm/chat          -> LLM :8004
-    GET  /health            -> aggregate health from all services
-    GET  /health/{service}  -> health check a single service
+    GET  /health            -> all services
+    GET  /health/{service}  -> one service
 """
 
 import logging

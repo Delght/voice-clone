@@ -56,7 +56,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 | Voice conversion | `/convert-voice` | `WAV + RVC .pth → RVC → converted WAV` |
 | Conversation (one shot) | `/chat` | `Mic → STT → LLM → TTS → WAV`. E.g. `make chat_sample`, `api_client.chat()` |
 | LLM only | `/llm/chat` | JSON `{"message": "..."}` → assistant text (proxied to `:8004`) |
-| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish-speech needs a ref WAV (upload, or `audio/output/morgan_freeman.wav`, or env) |
+| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref defaults to tracked `audio/output/morgan_freeman.wav`, or upload / env override |
 
 ## Requirements
 
@@ -73,17 +73,20 @@ make run_ui      # Gradio at :7860
 make health      # check all services
 ```
 
-fish-speech requires a separate env due to numpy version conflicts:
+Default TTS is **fish-speech** (`make run_tts` uses conda env `voice_fish`). VieNeu stays available:
 
 ```bash
-make run_tts_fish   # uses voice_fish env automatically
+make run_tts_vieneu   # VieNeu only (conda env voice)
 ```
+
+`POST /chat` uses the same fish ref rule: default file `audio/output/morgan_freeman.wav` (versioned in git), or `CHAT_FISH_REF_AUDIO` / `VOICE_CHAT_FISH_REF_AUDIO`.
 
 ### API
 
 ```bash
 curl http://localhost:8000/health
 
+# Needs fish TTS running + default ref audio/output/morgan_freeman.wav (or CHAT_* / VOICE_* env)
 curl -X POST http://localhost:8000/chat \
     -F "audio=@data/chunks/speech_chunk_0001.wav" -o response.wav
 
@@ -124,9 +127,11 @@ make check    # ruff format + lint
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/singswap/voice-cloning/blob/main/Voice_Colab.ipynb)
 
-To run this project on Google Colab with GPU support, click the badge above to open the provided notebook. Run the cells sequentially to start all services and obtain the public Gradio link for the UI.
+To run this project on Google Colab with GPU support, click the badge above. The notebook installs **fish-speech** (clone + Hugging Face weights), starts TTS with `TTS_ENGINES=fish`, then Gradio. Run cells in order.
 
 ## Docker
+
+Compose uses the **VieNeu** TTS image (`TTS_ENGINES=vieneu` on the `tts` service). Default **fish-speech** applies to local `make run_tts` / Colab / bare `uvicorn` when you do not use that container.
 
 ```bash
 cp .env.example .env   # fill in ANYTHING_LLM_API_KEY
