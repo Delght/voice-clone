@@ -12,7 +12,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 
 **Voice cloning:** short reference clip -> speech in that timbre.
 
-<video src="https://github.com/user-attachments/assets/350ab4ae-8efc-4d35-9ed3-310042c8ef68" controls width="100%"></video>
+<video src="https://github.com/user-attachments/assets/e8035025-0739-4137-bb95-1ebb46e5b46c" controls width="100%"></video>
 
 ### Bundled timbre
 
