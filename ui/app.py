@@ -13,13 +13,12 @@ from . import api_client
 
 TITLE = "Voice Cloning & AI Assistant"
 
-_DEFAULT_FISH_REF_WAV = str(default_fish_ref_path())
+_DEFAULT_FISH_REF_PATH = str(default_fish_ref_path())
 VOICE_CHAT_FISH_REF_AUDIO = os.environ.get("VOICE_CHAT_FISH_REF_AUDIO", "").strip()
 VOICE_CHAT_FISH_REF_TEXT = os.environ.get("VOICE_CHAT_FISH_REF_TEXT", "").strip()
 
 
 def _markdown_to_plain_for_tts(text: str) -> str:
-    """Strip common Markdown so TTS does not read asterisks and heading hashes."""
     if not (text or "").strip():
         return ""
     t = text
@@ -46,37 +45,32 @@ def _resolve_fish_ref_path(uploaded_ref: str | None) -> str | None:
         return uploaded_ref
     if VOICE_CHAT_FISH_REF_AUDIO and os.path.isfile(VOICE_CHAT_FISH_REF_AUDIO):
         return VOICE_CHAT_FISH_REF_AUDIO
-    if os.path.isfile(_DEFAULT_FISH_REF_WAV):
-        return _DEFAULT_FISH_REF_WAV
+    if os.path.isfile(_DEFAULT_FISH_REF_PATH):
+        return _DEFAULT_FISH_REF_PATH
     return None
 
 
 def _synthesize_voice_chat_reply(
     ai_text: str,
-    engine_choice: str,
     fish_ref_audio: str | None,
     fish_ref_text: str,
 ) -> str:
-    """Run TTS for Voice Chat; returns path to WAV. Raises APIError or ValueError."""
-    if "Fish" in engine_choice:
-        ref_path = _resolve_fish_ref_path(fish_ref_audio)
-        if not ref_path:
-            raise ValueError(
-                "No fish-speech reference WAV (upload in the accordion, restore "
-                "audio/output/morgan_freeman.wav, or set VOICE_CHAT_FISH_REF_AUDIO)."
-            )
-        ref_txt = (fish_ref_text or "").strip() or VOICE_CHAT_FISH_REF_TEXT
-        return api_client.tts_fish(
-            text=ai_text,
-            ref_audio_path=ref_path,
-            ref_text=ref_txt,
+    ref_path = _resolve_fish_ref_path(fish_ref_audio)
+    if not ref_path:
+        raise ValueError(
+            "No fish-speech reference (upload in the accordion, add "
+            "audio/reference/phuong_anh.wav, or set VOICE_CHAT_FISH_REF_AUDIO)."
         )
-    return api_client.tts_vieneu(text=ai_text)
+    ref_txt = (fish_ref_text or "").strip() or VOICE_CHAT_FISH_REF_TEXT
+    return api_client.tts_fish(
+        text=ai_text,
+        ref_audio_path=ref_path,
+        ref_text=ref_txt,
+    )
 
 
 def on_chat(
     audio_path: str | None,
-    engine_choice: str,
     fish_ref_audio: str | None,
     fish_ref_text: str,
 ):
@@ -112,7 +106,6 @@ def on_chat(
 
 def on_chat_speak(
     ai_raw_markdown: str,
-    engine_choice: str,
     fish_ref_audio: str | None,
     fish_ref_text: str,
 ):
@@ -121,7 +114,7 @@ def on_chat_speak(
         raise gr.Error("No AI reply yet. Send a voice message first, then click 🔊.")
 
     try:
-        return _synthesize_voice_chat_reply(plain, engine_choice, fish_ref_audio, fish_ref_text)
+        return _synthesize_voice_chat_reply(plain, fish_ref_audio, fish_ref_text)
     except ValueError as e:
         raise gr.Error(str(e)) from e
     except api_client.APIError as e:
@@ -276,12 +269,9 @@ def build_app() -> gr.Blocks:
                             type="filepath",
                             label="Your voice",
                         )
-                        chat_tts_engine = gr.Radio(
-                            choices=["VieNeu (Fastest)", "Fish-Speech (Morgan Freeman)"],
-                            value="Fish-Speech (Morgan Freeman)",
-                            label="Voice engine (AI reply)",
-                        )
-                        with gr.Accordion("Fish-speech reference (timbre)", open=False):
+                        with gr.Accordion(
+                            "AI response voice reference, optional override", open=False
+                        ):
                             chat_fish_ref_audio = gr.Audio(
                                 sources=["upload"],
                                 type="filepath",
@@ -301,7 +291,7 @@ def build_app() -> gr.Blocks:
                         )
                         with gr.Row(equal_height=True):
                             with gr.Column(scale=5, min_width=120):
-                                gr.Markdown("**AI response**")
+                                gr.Markdown("**AI response (Phương Anh voice)**")
                             with gr.Column(scale=0, min_width=56):
                                 chat_speak_btn = gr.Button(
                                     "🔊",
@@ -325,7 +315,6 @@ def build_app() -> gr.Blocks:
                     on_chat,
                     inputs=[
                         chat_audio_in,
-                        chat_tts_engine,
                         chat_fish_ref_audio,
                         chat_fish_ref_text,
                     ],
@@ -341,7 +330,6 @@ def build_app() -> gr.Blocks:
                     on_chat_speak,
                     inputs=[
                         chat_ai_raw_state,
-                        chat_tts_engine,
                         chat_fish_ref_audio,
                         chat_fish_ref_text,
                     ],
@@ -353,7 +341,7 @@ def build_app() -> gr.Blocks:
                     with gr.Column():
                         tts_text = gr.Textbox(
                             label="Text",
-                            placeholder="Nhập text cần đọc...",
+                            placeholder="Enter text to synthesize...",
                             lines=3,
                         )
                         tts_engine = gr.Dropdown(

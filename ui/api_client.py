@@ -7,11 +7,12 @@ Used by the Gradio UI - no model imports, just HTTP calls.
 from __future__ import annotations
 
 import os
-import subprocess
 import tempfile
 from pathlib import Path
 
 import httpx
+
+from voice_common.reference_audio import load_reference_as_wav
 
 GATEWAY_URL = os.environ.get("GATEWAY_URL", "http://localhost:8000")
 TIMEOUT = float(os.environ.get("UI_TIMEOUT", "180"))
@@ -46,36 +47,8 @@ def _raise_on_error(resp: httpx.Response) -> None:
         raise APIError(resp.status_code, detail)
 
 
-_NON_WAV = {".mp3", ".m4a", ".aac", ".ogg", ".flac", ".opus"}
-
-
 def _to_wav_bytes(audio_path: str) -> tuple[bytes, str]:
-    """Return (wav_bytes, filename). Converts non-WAV formats to WAV on the fly via ffmpeg."""
-    p = Path(audio_path)
-    if p.suffix.lower() not in _NON_WAV:
-        return p.read_bytes(), p.name
-
-    result = subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-i",
-            str(p),
-            "-ac",
-            "1",
-            "-ar",
-            "44100",
-            "-c:a",
-            "pcm_s16le",
-            "-f",
-            "wav",
-            "pipe:1",
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        check=True,
-    )
-    return result.stdout, p.stem + ".wav"
+    return load_reference_as_wav(Path(audio_path))
 
 
 def _save_wav(wav_bytes: bytes) -> str:

@@ -5,4 +5,4 @@ from pathlib import Path
 
 def default_fish_ref_path() -> Path:
     root = Path(__file__).resolve().parent.parent
-    return root / "audio" / "output" / "morgan_freeman.wav"
+    return root / "audio" / "reference" / "phuong_anh.wav"

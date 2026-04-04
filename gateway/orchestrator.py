@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 import httpx
 
 from voice_common.fish_ref import default_fish_ref_path
+from voice_common.reference_audio import load_reference_as_wav
 
 from .config import LLM_URL, STT_URL, TTS_URL
 
@@ -70,19 +72,24 @@ async def run_chat_pipeline(audio_bytes: bytes, client: httpx.AsyncClient) -> by
     if ref_path is None:
         raise PipelineError(
             "TTS",
-            "Missing fish-speech ref WAV (CHAT_FISH_REF_AUDIO, VOICE_CHAT_FISH_REF_AUDIO, "
-            "or audio/output/morgan_freeman.wav).",
+            "Missing fish-speech reference (CHAT_FISH_REF_AUDIO, VOICE_CHAT_FISH_REF_AUDIO, "
+            "or audio/reference/phuong_anh.wav).",
             503,
         )
     ref_text = (
         os.environ.get("CHAT_FISH_REF_TEXT") or os.environ.get("VOICE_CHAT_FISH_REF_TEXT") or ""
     ).strip()
-    ref_bytes = ref_path.read_bytes()
+    try:
+        ref_bytes, ref_filename = load_reference_as_wav(ref_path)
+    except FileNotFoundError as e:
+        raise PipelineError("TTS", f"Reference audio missing: {e}", 503) from e
+    except subprocess.CalledProcessError as e:
+        raise PipelineError("TTS", f"ffmpeg could not convert reference audio: {e}", 503) from e
 
     try:
         tts_resp = await client.post(
             f"{TTS_URL}/tts/fish-speech",
-            files={"ref_audio": (ref_path.name, ref_bytes, "audio/wav")},
+            files={"ref_audio": (ref_filename, ref_bytes, "audio/wav")},
             data={"text": response_text, "ref_text": ref_text},
         )
     except httpx.ConnectError:

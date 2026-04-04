@@ -10,7 +10,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 
 ![Demo UI](docs/images/demo.png)
 
-**Voice cloning:** (reference audio -> cloned speech).
+**Voice cloning:** (reference audio -> cloned speech). Default: `audio/reference/phuong_anh.wav` (my friend’s voice, with no voice licensing).
 
 <video src="https://github.com/user-attachments/assets/350ab4ae-8efc-4d35-9ed3-310042c8ef68" controls width="100%"></video>
 
@@ -55,7 +55,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 | Voice conversion | `/convert-voice` | `WAV + RVC .pth -> RVC -> converted WAV` |
 | Conversation (one shot) | `/chat` | `Mic -> STT -> LLM -> TTS -> WAV`. E.g. `make chat_sample`, `api_client.chat()` |
 | LLM only | `/llm/chat` | JSON `{"message": "..."}` -> assistant text (proxied to `:8004`) |
-| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref defaults to tracked `audio/output/morgan_freeman.wav`, or upload / env override |
+| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref defaults to tracked `audio/reference/phuong_anh.wav`, or upload / env override |
 
 ## Requirements
 
@@ -78,14 +78,14 @@ Default TTS is **fish-speech** (`make run_tts` uses conda env `voice_fish`). Vie
 make run_tts_vieneu   # VieNeu only (conda env voice)
 ```
 
-`POST /chat` uses the same fish ref rule: default file `audio/output/morgan_freeman.wav` (versioned in git), or `CHAT_FISH_REF_AUDIO` / `VOICE_CHAT_FISH_REF_AUDIO`.
+`POST /chat` uses the same fish ref rule: default file `audio/reference/phuong_anh.wav` (your reference clip, versioned in git), or `CHAT_FISH_REF_AUDIO` / `VOICE_CHAT_FISH_REF_AUDIO`. Set `VOICE_CHAT_FISH_REF_TEXT` / `CHAT_FISH_REF_TEXT` to the exact transcript of that clip for best quality.
 
 ### API
 
 ```bash
 curl http://localhost:8000/health
 
-# Needs fish TTS running + default ref audio/output/morgan_freeman.wav (or CHAT_* / VOICE_* env)
+# Needs fish TTS running + default ref audio/reference/phuong_anh.wav (or CHAT_* / VOICE_* env) + matching ref_text
 curl -X POST http://localhost:8000/chat \
     -F "audio=@data/chunks/speech_chunk_0001.wav" -o response.wav
 
