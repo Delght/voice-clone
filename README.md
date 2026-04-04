@@ -4,6 +4,23 @@ Self-hosted voice cloning and conversational AI. Zero external APIs.
 
 Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No training, no fine-tuning required.
 
+## Table of contents
+
+- [Fiona Anne](#fiona-anne)
+  - [Table of contents](#table-of-contents)
+  - [Demo](#demo)
+    - [Bundled timbre](#bundled-timbre)
+  - [Tech Stack](#tech-stack)
+  - [Architecture](#architecture)
+    - [Pipelines](#pipelines)
+  - [Requirements](#requirements)
+  - [Usage](#usage)
+    - [API](#api)
+    - [Scripts](#scripts)
+    - [Dev](#dev)
+  - [Google Colab](#google-colab)
+  - [Docker](#docker)
+
 ## Demo
 
 **Assistant:** **Google Gemma 4** via [Ollama](https://ollama.com) + [Anything-LLM](https://github.com/Mintplex-Labs/anything-llm).
@@ -20,7 +37,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 
 Your own clip: paths and transcript in `.env` (see [`.env.example`](.env.example)).
 
-## Stack
+## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
@@ -33,35 +50,38 @@ Your own clip: paths and transcript in `.env` (see [`.env.example`](.env.example
 
 ## Architecture
 
-```
-            User Browser / Mic
-                    │ :7860
-                    ▼
-┌──────────────────────────────────────────────┐
-│              Gradio UI (:7860)               │
-└───────────────────┬──────────────────────────┘
-                    │ HTTP
-                    ▼
-┌──────────────────────────────────────────────┐
-│           API Gateway (:8000)                │
-│  /transcribe  /tts/*  /convert-voice  /chat  │
-│  /llm/chat                                   │
-└──────┬──────────┬──────────┬───────────┬─────┘
-       ▼          ▼          ▼           ▼
-      STT        TTS         RVC        LLM
-     :8001      :8002       :8003      :8004
+```mermaid
+flowchart TB
+    U["Browser<br/>(Mic / Record)"]
+    G[Gradio :7860]
+    GW[Gateway :8000]
+
+    subgraph MS[Backend services]
+        direction LR
+        STT[STT :8001]
+        TTS[TTS :8002]
+        RVC[RVC :8003]
+        LLM[LLM :8004]
+    end
+
+    U --> G
+    G -->|HTTP| GW
+    GW --> STT
+    GW --> TTS
+    GW --> RVC
+    GW --> LLM
 ```
 
 ### Pipelines
 
 | Flow | Gateway | Notes |
 | --- | --- | --- |
-| Transcribe | `/transcribe` | `Audio -> STT -> text` |
+| LLM only | `/llm/chat` | JSON `{"message": "..."}` -> assistant text (proxied to `:8004`) |
+| Conversation (one shot) | `/chat` | `Mic -> STT -> LLM -> TTS -> WAV`. E.g. `make chat_sample`, `api_client.chat()` |
+| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref: bundled default, upload, or env (see `.env.example`) |
 | Voice cloning | `/tts/vieneu`, `/tts/fish-speech` | `Text + ref audio + ref_text -> TTS -> WAV` |
 | Voice conversion | `/convert-voice` | `WAV + RVC .pth -> RVC -> converted WAV` |
-| Conversation (one shot) | `/chat` | `Mic -> STT -> LLM -> TTS -> WAV`. E.g. `make chat_sample`, `api_client.chat()` |
-| LLM only | `/llm/chat` | JSON `{"message": "..."}` -> assistant text (proxied to `:8004`) |
-| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref: bundled default, upload, or env (see `.env.example`) |
+| Transcribe | `/transcribe` | `Audio -> STT -> text` |
 
 ## Requirements
 
@@ -132,11 +152,9 @@ make check    # ruff format + lint
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/singswap/voice-cloning/blob/main/Voice_Colab.ipynb)
 
-**Colab:** open the badge notebook, enable a GPU runtime, run cells top to bottom. Same idea as `make run_all` (cell 2) then `make run_ui` (cell 3; set `GRADIO_SHARE` for a public Gradio URL). One pip env, not conda.
-
 ## Docker
 
-Compose uses the **VieNeu** TTS image (`TTS_ENGINES=vieneu` on the `tts` service). Default **fish-speech** applies to local `make run_tts` / Colab / bare `uvicorn` when you do not use that container.
+Docker Compose **`tts`** is **VieNeu-only** (`TTS_ENGINES=vieneu`), **fish-speech:** `make run_tts`, Colab, or TTS outside that container.
 
 ```bash
 cp .env.example .env   # fill in ANYTHING_LLM_API_KEY

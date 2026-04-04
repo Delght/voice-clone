@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import re
 
@@ -30,6 +31,20 @@ _APP_THEME = gr.themes.Soft(
     body_background_fill_dark=_THEME_BODY_BG_DARK,
     background_fill_primary_dark=_THEME_SURFACE_BG_DARK,
 )
+
+
+def _gradio_theme_kw_for_blocks() -> dict[str, object]:
+    """Newer Gradio passes theme to launch(); older versions use Blocks(theme=...)."""
+    if "theme" in inspect.signature(gr.Blocks.launch).parameters:
+        return {}
+    return {"theme": _APP_THEME}
+
+
+def _gradio_theme_kw_for_launch() -> dict[str, object]:
+    if "theme" in inspect.signature(gr.Blocks.launch).parameters:
+        return {"theme": _APP_THEME}
+    return {}
+
 
 _DEFAULT_FISH_REF_PATH = str(default_fish_ref_path())
 VOICE_CHAT_FISH_REF_AUDIO = os.environ.get("VOICE_CHAT_FISH_REF_AUDIO", "").strip()
@@ -518,7 +533,7 @@ def _add_system_status_section() -> None:
 
 
 def build_app() -> gr.Blocks:
-    with gr.Blocks(title=TITLE) as app:
+    with gr.Blocks(title=TITLE, **_gradio_theme_kw_for_blocks()) as app:
         gr.Markdown(f"# {TITLE}")
         with gr.Tabs():
             _add_voice_chat_tab()
@@ -535,7 +550,7 @@ def main() -> None:
         server_name="0.0.0.0",
         server_port=7860,
         share=share,
-        theme=_APP_THEME,
+        **_gradio_theme_kw_for_launch(),
     )
 
 
