@@ -53,6 +53,7 @@ data/
 *.wav
 # Default fish-speech reference voice (mono 44.1kHz WAV; tracked)
 !audio/reference/phuong_anh.wav
+!audio/reference/phuong_anh.transcript.txt
 *.mp3
 *.flac
 *.ogg

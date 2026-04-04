@@ -6,13 +6,19 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 
 ## Demo
 
-**AI assistant:** LLM is **Gemma**
+**Assistant:** **Google Gemma 4** via [Ollama](https://ollama.com) + [Anything-LLM](https://github.com/Mintplex-Labs/anything-llm).
 
 ![Demo UI](docs/images/demo.png)
 
-**Voice cloning:** (reference audio -> cloned speech). Default: `audio/reference/phuong_anh.wav` (my friend’s voice, with no voice licensing).
+**Voice cloning:** short reference clip -> speech in that timbre.
 
 <video src="https://github.com/user-attachments/assets/350ab4ae-8efc-4d35-9ed3-310042c8ef68" controls width="100%"></video>
+
+### Bundled timbre
+
+**Phương Anh** (my special friend; personal recording for this repo, with permission).
+
+Your own clip: paths and transcript in `.env` (see [`.env.example`](.env.example)).
 
 ## Stack
 
@@ -21,7 +27,7 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 | STT | [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) |
 | TTS | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) + [pnnbao97/VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) |
 | Voice Conversion | [IAHispano/Applio](https://github.com/IAHispano/Applio) (RVC) |
-| LLM | [Google Gemma](https://ai.google.dev/gemma) (e.g. Gemma 4 via [Ollama](https://ollama.com)) + [Anything-LLM](https://github.com/Mintplex-Labs/anything-llm) |
+| LLM | [Gemma 4](https://ai.google.dev/gemma) via [Ollama](https://ollama.com) + [Anything-LLM](https://github.com/Mintplex-Labs/anything-llm) |
 | Backend | [FastAPI](https://github.com/fastapi/fastapi) + [Pydantic](https://github.com/pydantic/pydantic) |
 | Frontend | [Gradio](https://github.com/gradio-app/gradio) |
 
@@ -55,12 +61,12 @@ Zero shot voice cloning: Clone any voice from a 10 to 30s audio sample. No train
 | Voice conversion | `/convert-voice` | `WAV + RVC .pth -> RVC -> converted WAV` |
 | Conversation (one shot) | `/chat` | `Mic -> STT -> LLM -> TTS -> WAV`. E.g. `make chat_sample`, `api_client.chat()` |
 | LLM only | `/llm/chat` | JSON `{"message": "..."}` -> assistant text (proxied to `:8004`) |
-| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref defaults to tracked `audio/reference/phuong_anh.wav`, or upload / env override |
+| Voice Chat (Gradio) | `/transcribe` + `/llm/chat` + `/tts/*` | Same stages as `/chat`, split for progress UI; fish ref: bundled default, upload, or env (see `.env.example`) |
 
 ## Requirements
 
 - [Miniforge](https://github.com/conda-forge/miniforge) + `ffmpeg`
-- [Ollama](https://ollama.com) (pull your model, e.g. `ollama pull gemma4`) + [Anything-LLM](https://anythingllm.com) (workspace uses that model)
+- [Ollama](https://ollama.com) (`ollama pull gemma4` for Gemma 4) + [Anything-LLM](https://anythingllm.com) (workspace uses that model)
 
 ## Usage
 
@@ -78,14 +84,14 @@ Default TTS is **fish-speech** (`make run_tts` uses conda env `voice_fish`). Vie
 make run_tts_vieneu   # VieNeu only (conda env voice)
 ```
 
-`POST /chat` uses the same fish ref rule: default file `audio/reference/phuong_anh.wav` (your reference clip, versioned in git), or `CHAT_FISH_REF_AUDIO` / `VOICE_CHAT_FISH_REF_AUDIO`. Set `VOICE_CHAT_FISH_REF_TEXT` / `CHAT_FISH_REF_TEXT` to the exact transcript of that clip for best quality.
+`POST /chat` resolves fish reference like Voice Chat: bundled default unless `CHAT_FISH_REF_AUDIO` / `VOICE_CHAT_FISH_REF_AUDIO` is set. Set the matching `*_REF_TEXT` in `.env` for best quality (see `.env.example`).
 
 ### API
 
 ```bash
 curl http://localhost:8000/health
 
-# Needs fish TTS running + default ref audio/reference/phuong_anh.wav (or CHAT_* / VOICE_* env) + matching ref_text
+# Needs fish TTS + default ref (repo or CHAT_* / VOICE_* in .env) + matching ref_text
 curl -X POST http://localhost:8000/chat \
     -F "audio=@data/chunks/speech_chunk_0001.wav" -o response.wav
 

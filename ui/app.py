@@ -101,7 +101,7 @@ def on_chat(
         yield "Error: AI returned an empty response.", user_text, "", "", None
         return
 
-    yield "Done.", user_text, ai_text, ai_text, None
+    yield "", user_text, ai_text, ai_text, None
 
 
 def on_chat_speak(
@@ -267,7 +267,7 @@ def build_app() -> gr.Blocks:
                         chat_audio_in = gr.Audio(
                             sources=["microphone", "upload"],
                             type="filepath",
-                            label="Your voice",
+                            label="Your question",
                         )
                         with gr.Accordion(
                             "AI response voice reference, optional override", open=False
